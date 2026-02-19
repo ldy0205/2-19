@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 프롬프트 완전 가이드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: #2a2a3d;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --accent4: #f7971e;
+    --text: #e8e8f0;
+    --text-muted: #7878a0;
+    --text-dim: #4a4a68;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-logo {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 0.25rem;
+    list-style: none;
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+
+  .nav-links a {
+    display: block;
+    padding: 0.35rem 0.75rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .nav-links a:hover { background: var(--surface2); color: var(--text); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 6rem 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(108,99,255,0.15) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse-glow 4s ease-in-out infinite;
+  }
+  .hero-glow2 {
+    position: absolute;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,101,132,0.1) 0%, transparent 70%);
+    top: 30%; left: 70%;
+    animation: pulse-glow 6s ease-in-out infinite reverse;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+  }
+
+  .hero-tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    background: rgba(108,99,255,0.12);
+    border: 1px solid rgba(108,99,255,0.3);
+    padding: 0.35rem 1rem;
+    border-radius: 100px;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.1em;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .hero h1 span { color: var(--accent); }
+  .hero h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--accent2), var(--accent4));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-desc {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    max-width: 560px;
+    margin: 0 auto 2.5rem;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 2.5rem;
+    justify-content: center;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .stat {
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+  }
+  .stat-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  /* ── TOC ── */
+  .toc-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-title {
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-sub {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 3rem;
+  }
+
+  .toc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+
+  .toc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .toc-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(108,99,255,0.06), transparent);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  .toc-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(108,99,255,0.15); }
+  .toc-card:hover::before { opacity: 1; }
+
+  .toc-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    min-width: 2rem;
+  }
+
+  .toc-info h4 { font-size: 0.9rem; font-weight: 700; }
+  .toc-info p { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0 2rem;
+  }
+
+  /* ── CONTENT SECTIONS ── */
+  .content-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .section-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 4rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    line-height: 1;
+    min-width: 3.5rem;
+  }
+
+  /* ── PROMPT TYPE CARDS ── */
+  .type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .type-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .type-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+  .type-card.descriptive::after { background: linear-gradient(90deg, var(--accent), #a78bfa); }
+  .type-card.instructive::after { background: linear-gradient(90deg, var(--accent3), #06b6d4); }
+  .type-card.functional::after { background: linear-gradient(90deg, var(--accent4), var(--accent2)); }
+
+  .type-card:hover { border-color: rgba(108,99,255,0.4); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+
+  .type-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+  }
+  .descriptive .type-badge { background: rgba(108,99,255,0.15); color: #a78bfa; }
+  .instructive .type-badge { background: rgba(67,233,123,0.12); color: var(--accent3); }
+  .functional .type-badge { background: rgba(247,151,30,0.12); color: var(--accent4); }
+
+  .type-card h3 { font-size: 1.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+  .type-card .type-desc { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem; }
+
+  .reuse-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+  .reuse-track {
+    flex: 1;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .reuse-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease;
+  }
+  .descriptive .reuse-fill { width: 25%; background: #a78bfa; }
+  .instructive .reuse-fill { width: 55%; background: var(--accent3); }
+  .functional .reuse-fill { width: 95%; background: var(--accent4); }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.8;
+    overflow-x: auto;
+    position: relative;
+  }
+  .code-block::before {
+    content: attr(data-lang);
+    position: absolute;
+    top: 0.6rem; right: 1rem;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .code-comment { color: var(--text-dim); }
+  .code-key { color: var(--accent); }
+  .code-str { color: var(--accent3); }
+  .code-val { color: var(--accent4); }
+
+  /* ── SHOT GRID ── */
+  .shot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .shot-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shot-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .shot-label .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+  .zero .shot-label .dot { background: var(--text-dim); }
+  .one .shot-label .dot { background: var(--accent); }
+  .few .shot-label .dot { background: var(--accent3); }
+
+  .shot-card p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; }
+
+  .shot-example {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 0.8rem;
+    line-height: 1.7;
+  }
+  .shot-example .q { color: var(--text-muted); }
+  .shot-example .a { color: var(--accent3); font-weight: 500; }
+  .shot-example .eg { color: var(--text-dim); font-size: 0.75rem; }
+
+  /* ── PERSONA ── */
+  .persona-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .persona-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    transition: all 0.25s;
+  }
+  .persona-card:hover { border-color: var(--accent2); }
+
+  .persona-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+
+  .persona-card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .persona-card p { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; }
+
+  .persona-formula {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .persona-formula h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; color: var(--accent2); }
+
+  .formula-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .formula-step {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+  .formula-step-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--accent2);
+    background: rgba(255,101,132,0.12);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    min-width: 2rem;
+    text-align: center;
+  }
+  .formula-step p { font-size: 0.82rem; color: var(--text-muted); }
+
+  /* ── MARKDOWN TABLE ── */
+  .md-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin: 1.5rem 0;
+  }
+  .md-table th {
+    background: var(--surface2);
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .md-table td {
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .md-table tr:hover td { background: var(--surface); }
+
+  /* ── INTENSITY ── */
+  .intensity-levels {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+  }
+  .level-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .level-row:hover { border-color: rgba(108,99,255,0.3); }
+  .level-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    min-width: 50px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .level-l1 { background: rgba(120,120,160,0.15); color: var(--text-muted); }
+  .level-l2 { background: rgba(67,233,123,0.12); color: var(--accent3); }
+  .level-l3 { background: rgba(247,151,30,0.15); color: var(--accent4); }
+  .level-l4 { background: rgba(255,101,132,0.15); color: var(--accent2); }
+  .level-text { font-size: 0.85rem; flex: 1; }
+  .level-example { font-size: 0.8rem; color: var(--text-muted); font-style: italic; }
+
+  /* ── PRIORITY TABLE ── */
+  .priority-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .priority-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    border-left: 3px solid transparent;
+  }
+  .p-critical { background: rgba(255,101,132,0.06); border-color: var(--accent2); }
+  .p-important { background: rgba(247,151,30,0.06); border-color: var(--accent4); }
+  .p-optional { background: rgba(67,233,123,0.06); border-color: var(--accent3); }
+
+  .p-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .p-critical .p-dot { background: var(--accent2); }
+  .p-important .p-dot { background: var(--accent4); }
+  .p-optional .p-dot { background: var(--accent3); }
+
+  .p-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem; }
+  .p-critical .p-label { color: var(--accent2); }
+  .p-important .p-label { color: var(--accent4); }
+  .p-optional .p-label { color: var(--accent3); }
+
+  .p-items { font-size: 0.83rem; color: var(--text-muted); }
+
+  /* ── PATTERN CARDS ── */
+  .pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.25rem;
+  }
+  .pattern-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    transition: all 0.25s;
+  }
+  .pattern-card:hover { border-color: var(--accent3); transform: translateY(-2px); }
+
+  .pattern-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .pattern-card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .pattern-card p { font-size: 0.82rem; color: var(--text-muted); }
+
+  /* ── TIP BOX ── */
+  .tip-box {
+    background: rgba(108,99,255,0.08);
+    border: 1px solid rgba(108,99,255,0.25);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    font-size: 0.88rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+  .tip-box .tip-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+  .tip-box p { color: var(--text-muted); line-height: 1.6; }
+
+  /* ── CHECKLIST ── */
+  .checklist {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.6rem;
+    margin: 1.5rem 0;
+  }
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.8rem 1rem;
+    background: var(--surface);
+    border-radius: 8px;
+    font-size: 0.83rem;
+    color: var(--text-muted);
+  }
+  .check-item::before {
+    content: '✦';
+    color: var(--accent);
+    font-size: 0.65rem;
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+
+  /* ── HIGHLIGHT BOX ── */
+  .highlight-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+  }
+  .highlight-box h4 { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
+
+  /* ── COMPARISON ── */
+  .compare-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.25rem 0;
+  }
+  .compare-bad, .compare-good {
+    border-radius: 10px;
+    padding: 1.25rem;
+    font-size: 0.83rem;
+    line-height: 1.6;
+  }
+  .compare-bad {
+    background: rgba(255,101,132,0.06);
+    border: 1px solid rgba(255,101,132,0.2);
+  }
+  .compare-good {
+    background: rgba(67,233,123,0.06);
+    border: 1px solid rgba(67,233,123,0.2);
+  }
+  .compare-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+  }
+  .compare-bad .compare-label { color: var(--accent2); }
+  .compare-good .compare-label { color: var(--accent3); }
+
+  /* ── STEP FLOW ── */
+  .step-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 1.5rem 0;
+    position: relative;
+  }
+  .step-item {
+    display: flex;
+    gap: 1.25rem;
+    align-items: flex-start;
+    position: relative;
+  }
+  .step-item + .step-item { margin-top: 0; }
+
+  .step-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 32px;
+  }
+  .step-circle {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .step-line {
+    width: 2px;
+    flex: 1;
+    min-height: 1rem;
+    background: var(--border);
+    margin: 4px 0;
+  }
+  .step-content {
+    padding: 0 0 1.5rem;
+    flex: 1;
+  }
+  .step-content h5 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.35rem; }
+  .step-content p { font-size: 0.82rem; color: var(--text-muted); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 3rem 2rem;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    .section-header { flex-direction: column; gap: 0.5rem; }
+    .section-num { font-size: 2.5rem; }
+    .compare-row { grid-template-columns: 1fr; }
+    .hero-stats { gap: 1.5rem; }
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">PROMPT_GUIDE</div>
+  <ul class="nav-links">
+    <li><a href="#types">프롬프트 유형</a></li>
+    <li><a href="#shots">샷 프롬프팅</a></li>
+    <li><a href="#persona">페르소나</a></li>
+    <li><a href="#markdown">마크다운</a></li>
+    <li><a href="#intensity">강도 조절</a></li>
+    <li><a href="#tone">톤 지정</a></li>
+    <li><a href="#alternatives">대안 접근법</a></li>
+    <li><a href="#user-persona">이용자 페르소나</a></li>
+    <li><a href="#recipe">레시피 패턴</a></li>
+    <li><a href="#inverted">뒤집힌 상호작용</a></li>
+    <li><a href="#cognitive">인지 검증자</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div style="position:relative; z-index:1;">
+    <div class="hero-tag">AI PROMPT ENGINEERING GUIDE</div>
+    <h1>더 나은 결과를 만드는<br><span>AI 프롬프트</span> <em>완전 가이드</em></h1>
+    <p class="hero-desc">프롬프트 유형부터 고급 패턴까지 — AI와 대화하는 방법을 바꾸면 결과가 달라집니다.</p>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num">3</span><span class="stat-label">프롬프트 유형</span></div>
+      <div class="stat"><span class="stat-num">11</span><span class="stat-label">핵심 패턴</span></div>
+      <div class="stat"><span class="stat-num">∞</span><span class="stat-label">활용 가능성</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- TOC -->
+<section class="toc-section fade-in">
+  <div class="section-label">목차</div>
+  <h2 class="section-title">어디서든 시작하세요</h2>
+  <p class="section-sub">관심 있는 섹션을 클릭하여 바로 이동할 수 있습니다.</p>
+  <div class="toc-grid">
+    <a href="#types" class="toc-card"><span class="toc-num">01</span><div class="toc-info"><h4>프롬프트 3가지 유형</h4><p>서술형 · 지침형 · 함수형</p></div></a>
+    <a href="#shots" class="toc-card"><span class="toc-num">02</span><div class="toc-info"><h4>샷 프롬프팅</h4><p>제로샷 · 원샷 · 퓨샷</p></div></a>
+    <a href="#persona" class="toc-card"><span class="toc-num">03</span><div class="toc-info"><h4>페르소나 패턴</h4><p>역할 부여로 맞춤형 답변</p></div></a>
+    <a href="#markdown" class="toc-card"><span class="toc-num">04</span><div class="toc-info"><h4>마크다운 프롬프트</h4><p>구조화된 입력으로 정확한 출력</p></div></a>
+    <a href="#intensity" class="toc-card"><span class="toc-num">05</span><div class="toc-info"><h4>강도 조절</h4><p>표현 강도와 우선순위 설정</p></div></a>
+    <a href="#tone" class="toc-card"><span class="toc-num">06</span><div class="toc-info"><h4>톤 지정</h4><p>말투 하나로 달라지는 응답</p></div></a>
+    <a href="#alternatives" class="toc-card"><span class="toc-num">07</span><div class="toc-info"><h4>대안 접근법 패턴</h4><p>모든 선택지를 탐색하는 법</p></div></a>
+    <a href="#user-persona" class="toc-card"><span class="toc-num">08</span><div class="toc-info"><h4>이용자 페르소나</h4><p>대상에 특화된 맞춤형 답변</p></div></a>
+    <a href="#recipe" class="toc-card"><span class="toc-num">09</span><div class="toc-info"><h4>레시피 패턴</h4><p>단계별 실행 절차 받기</p></div></a>
+    <a href="#inverted" class="toc-card"><span class="toc-num">10</span><div class="toc-info"><h4>뒤집힌 상호작용</h4><p>AI가 묻고 사용자가 답한다</p></div></a>
+    <a href="#cognitive" class="toc-card"><span class="toc-num">11</span><div class="toc-info"><h4>인지 검증자 패턴</h4><p>복잡한 문제를 정확하게 분석</p></div></a>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 1: PROMPT TYPES -->
+<section id="types" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <div>
+      <div class="section-label">Prompt Types</div>
+      <h2 class="section-title">프롬프트의 3가지 유형</h2>
+      <p class="section-sub">목적과 재사용성에 따라 적합한 유형을 선택하세요.</p>
+    </div>
+  </div>
+
+  <div class="type-grid">
+    <!-- 서술형 -->
+    <div class="type-card descriptive">
+      <div class="type-badge">서술형 (Descriptive)</div>
+      <h3>맥락과 배경 중심</h3>
+      <p class="type-desc">AI가 상황을 이해하도록 맥락과 배경을 설명하는 방식. 1회성 작업에 적합합니다.</p>
+      <div class="reuse-bar">
+        <span>재사용성</span>
+        <div class="reuse-track"><div class="reuse-fill"></div></div>
+        <span>낮음</span>
+      </div>
+      <div class="code-block" data-lang="예시">당신은 10년 경력의 무역 전문가입니다.<br>중소기업 수출 담당자가 HS Code를 처음 배우는 상황입니다.<br><span class="code-comment">이 사람에게 HS Code의 개념과 중요성을 설명해주세요.</span></div>
+    </div>
+
+    <!-- 지침형 -->
+    <div class="type-card instructive">
+      <div class="type-badge">지침형 (Instructive)</div>
+      <h3>단계별 규칙 제시</h3>
+      <p class="type-desc">명확한 규칙과 절차를 제공하여 원하는 형식의 결과물을 유도합니다.</p>
+      <div class="reuse-bar">
+        <span>재사용성</span>
+        <div class="reuse-track"><div class="reuse-fill"></div></div>
+        <span>중간</span>
+      </div>
+      <div class="code-block" data-lang="예시">다음 규칙에 따라 Python 코드를 작성하세요.<br><span class="code-key">- 함수명은 snake_case로 작성</span><br><span class="code-key">- 각 함수에 docstring 포함</span><br><span class="code-key">- 예외 처리 반드시 포함</span><br><span class="code-str">- 결과는 JSON 형식으로 반환</span></div>
+    </div>
+
+    <!-- 함수형 -->
+    <div class="type-card functional">
+      <div class="type-badge">함수형 (Functional)</div>
+      <h3>입력-처리-출력 구조</h3>
+      <p class="type-desc">입력값과 출력값을 명확히 정의하여 일관된 결과를 생성합니다. 자동화에 최적.</p>
+      <div class="reuse-bar">
+        <span>재사용성</span>
+        <div class="reuse-track"><div class="reuse-fill"></div></div>
+        <span>높음</span>
+      </div>
+      <div class="code-block" data-lang="예시"><span class="code-key">입력:</span> {product_name}, {hs_code}, {country}<br><span class="code-key">처리:</span> 해당 국가 관세율 및 수입 규제 조회<br><span class="code-val">출력:</span> {<br>&nbsp;&nbsp;"관세율": "",<br>&nbsp;&nbsp;"규제사항": [],<br>&nbsp;&nbsp;"필요서류": []<br>}</div>
+    </div>
+  </div>
+
+  <div class="tip-box">
+    <span class="tip-icon">💡</span>
+    <p><strong>선택 팁:</strong> 일회성 질문에는 서술형, 반복 작업 템플릿에는 지침형, 자동화 파이프라인에는 함수형이 적합합니다. 복잡한 작업에서는 세 가지를 조합해서 사용하세요.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 2: SHOTS -->
+<section id="shots" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <div>
+      <div class="section-label">Shot Prompting</div>
+      <h2 class="section-title">제로샷 · 원샷 · 퓨샷</h2>
+      <p class="section-sub">예시를 얼마나 제공하느냐에 따라 결과의 일관성이 달라집니다.</p>
+    </div>
+  </div>
+
+  <div class="shot-grid">
+    <div class="shot-card zero">
+      <div class="shot-label"><span class="dot"></span>Zero-Shot</div>
+      <p>예시 없이 바로 지시하는 방식. 일반적인 질문에 적합합니다.</p>
+      <div class="shot-example">
+        <div class="q">프롬프트: 강아지에 대해서 설명해주세요.</div>
+      </div>
+    </div>
+
+    <div class="shot-card one">
+      <div class="shot-label"><span class="dot"></span>One-Shot</div>
+      <p>예시를 1개 제공하는 방식. 패턴을 명확히 할 때 사용합니다.</p>
+      <div class="shot-example">
+        <div class="q">감정을 분류해 주세요</div>
+        <div class="eg">예시) "배송이 너무 늦어서 실망했어요" → 부정</div>
+        <br>
+        <div class="q">"이 제품 정말 맘에 들어"</div>
+        <div class="a">감정: 긍정 ✓</div>
+      </div>
+    </div>
+
+    <div class="shot-card few">
+      <div class="shot-label"><span class="dot"></span>Few-Shot</div>
+      <p>예시 2개 이상 제공. 복잡한 분류나 일관된 패턴 유지에 최적입니다.</p>
+      <div class="shot-example">
+        <div class="eg">"배송이 너무 늦어서 실망이야" → 부정</div>
+        <div class="eg">"그냥 평범한 제품이야" → 중립</div>
+        <div class="eg">"역대급 만족이야" → 긍정</div>
+        <div class="eg">"품질은 좋은데 가격이 비싸요" → 중립</div>
+        <div class="q">"이 제품 정말 맘에 들어"</div>
+        <div class="a">감정: 긍정 ✓</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:2rem;">
+    <h4>📦 HS Code 퓨샷 예시</h4>
+    <div class="code-block" data-lang="few-shot">품목: "면으로 만든 남성용 티셔츠" → <span class="code-str">6109.10</span><br>품목: "폴리에스테르 소재 여성 블라우스" → <span class="code-str">6206.40</span><br>품목: "아동용 데님 바지" → <span class="code-str">6203.42</span><br><br>품목: "울 혼방 남성 재킷"<br><span class="code-key">HS Code:</span> <span class="code-val">?</span></div>
+    <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.75rem;">퓨샷 예시를 통해 AI는 분류 패턴을 학습하고 일관된 결과를 생성합니다.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 3: PERSONA -->
+<section id="persona" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <div>
+      <div class="section-label">Persona Pattern</div>
+      <h2 class="section-title">페르소나 패턴</h2>
+      <p class="section-sub">같은 질문도 AI의 역할에 따라 전혀 다른 답변이 나옵니다.</p>
+    </div>
+  </div>
+
+  <div class="compare-row">
+    <div class="compare-bad">
+      <div class="compare-label">❌ 페르소나 없음</div>
+      "이 계약서 검토해줘" → 일반적인 설명
+    </div>
+    <div class="compare-good">
+      <div class="compare-label">✓ 페르소나 있음</div>
+      변호사: 법적 리스크 분석<br>CFO: 재무조건 · 수익성<br>신입사원: 친절한 쉬운 설명
+    </div>
+  </div>
+
+  <div class="persona-formula">
+    <h3>✦ 좋은 페르소나의 4가지 요소</h3>
+    <div class="formula-steps">
+      <div class="formula-step">
+        <span class="formula-step-num">01</span>
+        <p><strong>[역할]</strong><br>당신은 ___입니다.</p>
+      </div>
+      <div class="formula-step">
+        <span class="formula-step-num">02</span>
+        <p><strong>[경력/배경]</strong><br>N년 경력을 가지고 있으며</p>
+      </div>
+      <div class="formula-step">
+        <span class="formula-step-num">03</span>
+        <p><strong>[전문 분야]</strong><br>___에 특화되어 있습니다.</p>
+      </div>
+      <div class="formula-step">
+        <span class="formula-step-num">04</span>
+        <p><strong>[말투/태도]</strong><br>___하게 응답하세요.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="persona-grid">
+    <div class="persona-card">
+      <div class="persona-icon" style="background:rgba(108,99,255,0.12);">⚖️</div>
+      <h4>관세사 페르소나</h4>
+      <p>"당신은 20년 경력의 관세사입니다. FTA협정세율과 원산지 규정의 전문가로, 중소기업 무역 담당자에게 복잡한 내용을 쉽고 실용적으로 설명하는 것이 특기입니다."</p>
+    </div>
+    <div class="persona-card">
+      <div class="persona-icon" style="background:rgba(255,101,132,0.12);">💻</div>
+      <h4>비평가 페르소나</h4>
+      <p>"당신은 까다로운 개발자입니다. 코드 리뷰 시 성능, 보안, 가독성을 엄격하게 평가하며, 칭찬보다 개선점을 먼저 지적하는 스타일입니다."</p>
+    </div>
+    <div class="persona-card">
+      <div class="persona-icon" style="background:rgba(67,233,123,0.12);">🌏</div>
+      <h4>멀티 페르소나</h4>
+      <p>3명의 전문가 입장에서 동시에 분석: 김부장(영업 15년, 낙관적), 이박사(데이터 중심, 신중함), 박대표(속도 중심, 리스크 감수)</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 4: MARKDOWN -->
+<section id="markdown" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <div>
+      <div class="section-label">Markdown Prompting</div>
+      <h2 class="section-title">마크다운으로 구조화된 프롬프트</h2>
+      <p class="section-sub">AI는 텍스트를 구조적으로 파싱합니다. 마크다운으로 역할·조건·출력을 명확히 구분하면 더 정확한 응답을 이끌어냅니다.</p>
+    </div>
+  </div>
+
+  <table class="md-table">
+    <thead>
+      <tr><th>요소</th><th>문법</th><th>용도</th><th>예시</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>헤더</td><td><code>#, ##, ###</code></td><td>프롬프트 구조의 뼈대</td><td><code>#역할 / #작업 / #출력형식</code></td></tr>
+      <tr><td>코드 블록</td><td><code>""" ... """</code></td><td>지시문과 데이터 분리</td><td>Python 코드 또는 입력 데이터 분리</td></tr>
+      <tr><td>인용문</td><td><code>> 텍스트</code></td><td>절대 조건·핵심 강조</td><td><code>> 반드시 한국어로 답변하세요</code></td></tr>
+      <tr><td>목록</td><td><code>- 항목</code></td><td>제약 조건 나열</td><td>500자 이내, 전문용어 설명 추가</td></tr>
+      <tr><td>표</td><td><code>| 열 | 열 |</code></td><td>입출력 예시 구조화</td><td>입력 품목 → HS Code → 관세율</td></tr>
+      <tr><td>굵게/기울임</td><td><code>**굵게** *기울임*</code></td><td>변수·중요 강조</td><td><code>**[분석대상]**에 대해 *반드시*</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box">
+    <h4>🏗️ 완성형 마크다운 프롬프트 예시</h4>
+    <div class="code-block" data-lang="markdown">
+<span class="code-key"># 역할</span><br>
+당신은 중소기업 수출 컨설턴트입니다.<br>
+FTA 활용과 원산지 증명 전문가입니다.<br><br>
+<span class="code-key"># 작업</span><br>
+아래 수출 품목에 대한 FTA 적용 가능 여부를 분석하세요.<br><br>
+<span class="code-str">"""</span><br>
+품목명: 스테인리스 주방용품<br>
+수출국: 한국 / 수입국: 베트남<br>
+<span class="code-str">"""</span><br><br>
+<span class="code-key"># 제약 조건</span><br>
+> 확실하지 않은 세율은 반드시 "세관 확인 필요"로 표기<br><br>
+<span class="code-key"># 출력 형식</span><br>
+<span class="code-val">{</span><br>
+&nbsp;&nbsp;"FTA_적용": TRUE/FALSE,<br>
+&nbsp;&nbsp;"협정세율": "",<br>
+&nbsp;&nbsp;"필요서류": []<br>
+<span class="code-val">}</span>
+    </div>
+  </div>
+
+  <div class="tip-box">
+    <span class="tip-icon">📐</span>
+    <p><strong>황금 구조:</strong> <strong>역할</strong> → <strong>작업</strong> → <strong>입력</strong> → <strong>제약</strong> → <strong>출력</strong> 순서로 구성하면 AI가 가장 일관된 결과를 냅니다.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 5: INTENSITY -->
+<section id="intensity" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <div>
+      <div class="section-label">Expression Intensity</div>
+      <h2 class="section-title">글의 표현 강도와 우선순위</h2>
+      <p class="section-sub">어떤 표현을 쓰느냐에 따라 AI가 지시를 얼마나 강하게 따르는지 달라집니다.</p>
+    </div>
+  </div>
+
+  <div class="intensity-levels">
+    <div class="level-row">
+      <div class="level-badge level-l1">L1 권장</div>
+      <div class="level-text">가능하면, 되도록, ~하는 편이 좋습니다</div>
+      <div class="level-example">"가능하면 한국어로 답변해 주세요"</div>
+    </div>
+    <div class="level-row">
+      <div class="level-badge level-l2">L2 일반</div>
+      <div class="level-text">~하세요, ~해주세요</div>
+      <div class="level-example">"한국어로 답변해 주세요"</div>
+    </div>
+    <div class="level-row">
+      <div class="level-badge level-l3">L3 강조</div>
+      <div class="level-text">반드시, 꼭, 항상</div>
+      <div class="level-example">"반드시 한국어로 답변해 주세요"</div>
+    </div>
+    <div class="level-row">
+      <div class="level-badge level-l4">L4 절대</div>
+      <div class="level-text">절대로, 어떤 경우에도, 예외없이</div>
+      <div class="level-example">"어떤 경우에도 영어를 사용하지 마세요"</div>
+    </div>
+  </div>
+
+  <h3 style="font-size:1rem; font-weight:700; margin:2rem 0 1rem;">조건 우선순위 시스템</h3>
+  <div class="priority-grid">
+    <div class="priority-row p-critical">
+      <div class="p-dot"></div>
+      <div>
+        <div class="p-label">🔴 최우선 (절대 조건)</div>
+        <div class="p-items">개인 정보 절대 출력하지 않는다 · 사실과 다른 내용을 생성하지 않는다</div>
+      </div>
+    </div>
+    <div class="priority-row p-important">
+      <div class="p-dot"></div>
+      <div>
+        <div class="p-label">🟡 중요 (일반 조건)</div>
+        <div class="p-items">답변은 500자 이내로 작성 · 전문 용어 괄호 설명 추가</div>
+      </div>
+    </div>
+    <div class="priority-row p-optional">
+      <div class="p-dot"></div>
+      <div>
+        <div class="p-label">🟢 선택 (권장 조건)</div>
+        <div class="p-items">가능하면 실제 사례를 포함 · 표나 목록을 활용하면 더 좋다</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 6: TONE -->
+<section id="tone" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <div>
+      <div class="section-label">Tone Control</div>
+      <h2 class="section-title">톤(말투) 지정</h2>
+      <p class="section-sub">톤을 지정하면 같은 내용도 전혀 다른 글이 됩니다.</p>
+    </div>
+  </div>
+
+  <div class="code-block" style="margin-bottom:1.5rem;" data-lang="원본">
+    올해 들어 회사는 큰 변화를 맞이했습니다. 이제 새로운 전략과 목표를 설정하고, 모든 직원이 함께 나아가려고 합니다.
+  </div>
+
+  <div class="pattern-grid">
+    <div class="pattern-card">
+      <div class="pattern-icon">😄</div>
+      <h4>유머러스한</h4>
+      <p>가볍고 재치 있는 표현으로 변환. 딱딱한 기업 공지를 친근하게</p>
+    </div>
+    <div class="pattern-card">
+      <div class="pattern-icon">💙</div>
+      <h4>감정적인</h4>
+      <p>공감과 감성을 강조. 직원들의 마음에 울림을 주는 표현</p>
+    </div>
+    <div class="pattern-card">
+      <div class="pattern-icon">🌱</div>
+      <h4>따뜻한</h4>
+      <p>격려와 희망을 담은 부드러운 어조. 팀 결속에 효과적</p>
+    </div>
+    <div class="pattern-card">
+      <div class="pattern-icon">😏</div>
+      <h4>아이러니한</h4>
+      <p>반어적 표현으로 뉘앙스 전달. 날카로운 시각 제공</p>
+    </div>
+    <div class="pattern-card">
+      <div class="pattern-icon">✨</div>
+      <h4>로맨틱한</h4>
+      <p>시적이고 감성적인 표현. 브랜드 스토리텔링에 활용</p>
+    </div>
+    <div class="pattern-card">
+      <div class="pattern-icon">📊</div>
+      <h4>보고서 용도별</h4>
+      <p>임원용: 3줄 이내, 숫자 중심<br>실무자용: 단계별, 기술적·구체적</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 7: ALTERNATIVES -->
+<section id="alternatives" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <div>
+      <div class="section-label">Alternative Approach Pattern</div>
+      <h2 class="section-title">대안 접근법 패턴</h2>
+      <p class="section-sub">모든 선택지를 나열하고 비교해서 결정권을 사람에게 돌려줍니다.</p>
+    </div>
+  </div>
+
+  <div class="compare-row">
+    <div class="compare-bad">
+      <div class="compare-label">❌ 일반 프롬프트</div>
+      "어떻게 하면 좋을까?" → AI가 임의로 하나를 선택해서 답변
+    </div>
+    <div class="compare-good">
+      <div class="compare-label">✓ 대안 접근 패턴</div>
+      "모든 방법을 나열하고 각각의 장단점을 비교해줘" → 선택권이 사람에게 돌아옴
+    </div>
+  </div>
+
+  <div class="pattern-grid" style="margin-top:2rem;">
+    <div class="pattern-card">
+      <div class="pattern-icon">📋</div>
+      <h4>패턴 1: 단순 나열형</h4>
+      <p>핵심원리 · 적합한 상황 · 단점 · 난이도를 형식에 맞춰 4가지 이상 방법 제시</p>
+    </div>
+    <div class="pattern-card">
+      <div class="pattern-icon">⚖️</div>
+      <h4>패턴 2: 축 기반 비교형</h4>
+      <p>개발속도 · 유지보수 · 비용 · 확장성 등 평가 기준으로 프레임워크 비교</p>
+    </div>
+    <div class="pattern-card">
+      <div class="pattern-icon">🔀</div>
+      <h4>패턴 3: 상황별 분기형</h4>
+      <p>상황 A/B/C/D별로 1순위·2순위 추천과 이유를 독립적으로 제시</p>
+    </div>
+    <div class="pattern-card">
+      <div class="pattern-icon">🔄</div>
+      <h4>패턴 4: 역발상 대안형</h4>
+      <p>"하지 않는" 선택지 + "문제 자체를 재정의"하는 방법도 포함한 5가지 제시</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 8: USER PERSONA -->
+<section id="user-persona" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <div>
+      <div class="section-label">User Persona Pattern</div>
+      <h2 class="section-title">이용자 페르소나 패턴</h2>
+      <p class="section-sub">AI 역할이 아니라 "답변을 받을 사람"을 정의하여 맞춤형 답변을 유도합니다.</p>
+    </div>
+  </div>
+
+  <div class="compare-row">
+    <div class="compare-bad">
+      <div class="compare-label">페르소나 패턴</div>
+      <strong>AI의 역할</strong>을 정의<br>"당신은 전문가입니다"
+    </div>
+    <div class="compare-good">
+      <div class="compare-label">이용자 페르소나</div>
+      <strong>답변을 받는 사람</strong>을 정의<br>"이 답변을 듣는 사람은 ___입니다"
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:2rem;">
+    <h4>이용자 페르소나 예시</h4>
+    <div class="code-block" data-lang="template">
+<span class="code-key"># 이용자 정보</span><br>
+- 직책: 중소기업 대표 (제조업, 직원 30명)<br>
+- 수출 경험: 국내 영업만 10년, 해외 수출 처음<br>
+- 관심사: 리스크 최소화, 빠른 실행<br>
+- 우려: "복잡하고 어려울 것 같다"는 막연한 두려움<br>
+- 시간: 바빠서 긴 글을 읽지 않음<br><br>
+<span class="code-key"># 지시</span><br>
+위의 이용자에게 첫 수출 준비 3단계를 설명하세요.<br>
+<span class="code-str">전문 용어는 최소화하고, 각 단계는 3줄 이내로 작성하세요.</span>
+    </div>
+  </div>
+
+  <h3 style="font-size:1rem; font-weight:700; margin:2rem 0 1rem;">이용자 페르소나 설계 체크리스트</h3>
+  <div class="checklist">
+    <div class="check-item">이 사람의 직업과 역할은?</div>
+    <div class="check-item">이 주제에 대한 사전 지식 수준은?</div>
+    <div class="check-item">이 정보로 무엇을 결정할 예정인가?</div>
+    <div class="check-item">지금 어떤 상태인가? (급함/여유)</div>
+    <div class="check-item">얼마나 긴 답변을 읽을 여유가 있는가?</div>
+    <div class="check-item">가장 두려워하는 것 / 원하는 것은?</div>
+    <div class="check-item">절대 쓰면 안 되는 언어 표현이 있나?</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 9: RECIPE -->
+<section id="recipe" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">09</span>
+    <div>
+      <div class="section-label">Recipe Pattern</div>
+      <h2 class="section-title">레시피 패턴</h2>
+      <p class="section-sub">목표 달성을 위한 단계별 실행 절차를 구체적으로 받는 방법입니다.</p>
+    </div>
+  </div>
+
+  <div class="tip-box">
+    <span class="tip-icon">🍳</span>
+    <p>레시피 패턴은 "어떻게?"가 아니라 <strong>구체적인 순서가 필요할 때</strong> 사용합니다. 소요 시간, 완료 기준, 주의사항까지 포함하면 실행 가능한 로드맵이 됩니다.</p>
+  </div>
+
+  <div class="code-block" style="margin-bottom:2rem;" data-lang="recipe template">
+<span class="code-key">## Step {번호}: {단계명}</span><br>
+- <span class="code-str">할 일:</span> {구체적 행동}<br>
+- <span class="code-str">소요 시간:</span> {예상 기간}<br>
+- <span class="code-str">완료 기준:</span> {이것이 되면 다음으로}<br>
+- <span class="code-str">주의사항:</span> {흔한 실수}
+  </div>
+
+  <h3 style="font-size:1rem; font-weight:700; margin-bottom:1.5rem;">분기 포함 레시피 (클레임 처리)</h3>
+  <div class="step-flow">
+    <div class="step-item">
+      <div class="step-connector"><div class="step-circle">1</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h5>클레임 접수 및 내용 파악</h5>
+        <p>정상: 내용 명확 → 2단계로<br>이상: 내용 불명확 → 추가 서류 요청</p>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-connector"><div class="step-circle">2</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h5>계약서 조항 검토</h5>
+        <p>정상: 해당 조항 존재 → 3단계로<br>이상: 계약서에 명시 없음 → 협의 절차</p>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-connector"><div class="step-circle">3</div></div>
+      <div class="step-content">
+        <h5>보상 또는 재협상 처리</h5>
+        <p>정상: 합의 완료 → 문서화 후 종결<br>이상: 합의 실패 → 중재/법적 절차 검토</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 10: INVERTED -->
+<section id="inverted" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">10</span>
+    <div>
+      <div class="section-label">Inverted Interaction Pattern</div>
+      <h2 class="section-title">뒤집힌 상호작용 패턴</h2>
+      <p class="section-sub">AI가 먼저 묻고, 사용자가 답하면서 맞춤형 결과물을 완성합니다.</p>
+    </div>
+  </div>
+
+  <div class="type-grid">
+    <div class="type-card" style="border-color: rgba(108,99,255,0.3);">
+      <div class="type-badge" style="background:rgba(108,99,255,0.15);color:#a78bfa;">방법 1</div>
+      <h3>질문 먼저, 답은 나중</h3>
+      <p class="type-desc">모든 필요한 정보를 한 번에 수집한 후 결과물을 작성합니다.</p>
+      <div class="code-block" data-lang="template">제가 원하는 결과물은 {목표}입니다.<br>바로 만들지 말고, 먼저 필요한 정보를<br>질문해주세요.<br><span class="code-comment">모든 정보가 수집된 후 결과물을 작성하세요.</span></div>
+    </div>
+    <div class="type-card" style="border-color: rgba(67,233,123,0.3);">
+      <div class="type-badge" style="background:rgba(67,233,123,0.12);color:var(--accent3);">방법 2</div>
+      <h3>한 번에 하나씩</h3>
+      <p class="type-desc">한 번에 하나의 질문만 하여 순차적으로 정보를 수집합니다.</p>
+      <div class="code-block" data-lang="template">제가 원하는 결과물은 {목표}입니다.<br><span class="code-key">한 번에 하나의 질문만 하세요.</span><br>제가 답하면 다음 질문으로 넘어가고<br>충분한 정보가 모이면 결과물을 작성하세요.</div>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:2rem;">
+    <h4>실전 예시 — 수출 제안서</h4>
+    <div class="code-block" data-lang="example">수출 제안서를 작성해주세요.<br>바로 작성하지 말고, 먼저 아래 항목들을 질문해서<br>제 답변을 모두 수집한 후 작성하세요.<br><br><span class="code-key">수집이 필요한 정보:</span><br>- 제품 정보<br>- 타깃 바이어<br>- 핵심 강점<br>- 가격 정책<br>- 납기 조건</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 11: COGNITIVE VALIDATOR -->
+<section id="cognitive" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">11</span>
+    <div>
+      <div class="section-label">Cognitive Verifier Pattern</div>
+      <h2 class="section-title">인지 검증자 패턴</h2>
+      <p class="section-sub">복잡한 질문을 하위 문제로 분해하고, 각각을 검증한 뒤 통합하는 방법입니다.</p>
+    </div>
+  </div>
+
+  <div class="compare-row">
+    <div class="compare-bad">
+      <div class="compare-label">❌ 일반 패턴</div>
+      복잡한 질문 → 즉각 답변<br>→ 오류·누락 발생 가능성 높음
+    </div>
+    <div class="compare-good">
+      <div class="compare-label">✓ 인지 검증자 패턴</div>
+      복잡한 질문 → 하위 질문 분해 → 순서대로 검증 → 통합 답변
+    </div>
+  </div>
+
+  <div class="pattern-grid" style="margin-top:2rem;">
+    <div class="pattern-card">
+      <div class="pattern-icon">🔬</div>
+      <h4>방법 1: 명시적 분해 요청</h4>
+      <p>바로 답하지 말고, 먼저 하위 질문 목록을 만들어 각각 순서대로 답한 뒤 최종 통합 답변을 제시하도록 지시</p>
+    </div>
+    <div class="pattern-card">
+      <div class="pattern-icon">🎓</div>
+      <h4>방법 2: 전문가 검증 방식</h4>
+      <p>전문가처럼 접근하되, 확신이 없는 부분은 가정으로 명시하고 각 판단의 근거를 함께 제시하면서 단계적으로 결론에 도달</p>
+    </div>
+  </div>
+
+  <div class="code-block" style="margin-top:1.5rem;" data-lang="example">
+아래 질문에 바로 답하지 말고<br>
+먼저 이 질문을 정확히 답하기 위해 필요한<br>
+<span class="code-key">하위 질문을 3~5개 도출하세요.</span><br>
+각 하위 질문에 순서대로 답한 뒤 최종 답변을 제시하세요.<br><br>
+<span class="code-str">질문: "Python으로 무역 데이터 자동화를 구축할 때<br>클라우드 서버가 필요한가요?"</span>
+  </div>
+
+  <div class="tip-box">
+    <span class="tip-icon">🧩</span>
+    <p>인지 검증자 패턴은 세금·법률·기술 아키텍처처럼 <strong>여러 조건이 동시에 영향을 미치는 복잡한 판단</strong>에 특히 효과적입니다. AI의 즉각적인 단순화를 막고 체계적인 분석을 유도합니다.</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p style="margin-bottom:0.5rem;">AI 프롬프트 완전 가이드 · Built with ♥</p>
+  <p style="color:var(--text-dim);">프롬프트 엔지니어링으로 AI와의 대화를 더 스마트하게</p>
+</footer>
+
+<script>
+  // Intersection Observer for fade-in
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+  // Staggered TOC card animation
+  document.querySelectorAll('.toc-card').forEach((card, i) => {
+    card.style.transitionDelay = `${i * 0.04}s`;
+  });
+
+  // Animate reuse bars on scroll
+  const barObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.reuse-fill').forEach(fill => {
+          const width = fill.style.width;
+          fill.style.width = '0%';
+          setTimeout(() => { fill.style.width = width; }, 100);
+        });
+        barObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.type-grid').forEach(grid => barObserver.observe(grid));
+
+  // Smooth active nav highlight
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(section => {
+      if (window.scrollY >= section.offsetTop - 100) {
+        current = section.getAttribute('id');
+      }
+    });
+    navLinks.forEach(link => {
+      link.style.color = link.getAttribute('href') === `#${current}`
+        ? 'var(--text)'
+        : '';
+      link.style.background = link.getAttribute('href') === `#${current}`
+        ? 'var(--surface2)'
+        : '';
+    });
+  }, { passive: true });
+</script>
+</body>
+</html>
