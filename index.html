@@ -689,6 +689,135 @@
   .compare-bad .compare-label { color: var(--accent2); }
   .compare-good .compare-label { color: var(--accent3); }
 
+  /* ── SEARCH ── */
+  .search-wrap {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 200;
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 10vh;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .search-wrap.open { opacity: 1; pointer-events: all; }
+
+  .search-box {
+    width: 100%;
+    max-width: 640px;
+    padding: 0 1.5rem;
+    position: relative;
+  }
+  .search-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 14px;
+    padding: 1.1rem 1.5rem 1.1rem 3rem;
+    color: var(--text);
+    font-size: 1.1rem;
+    font-family: 'Noto Sans KR', sans-serif;
+    outline: none;
+    box-shadow: 0 0 40px rgba(108,99,255,0.2);
+  }
+  .search-icon-label {
+    position: absolute;
+    left: 2.7rem; top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.1rem;
+    pointer-events: none;
+  }
+  .search-results {
+    width: 100%;
+    max-width: 640px;
+    padding: 0.75rem 1.5rem 0;
+    max-height: 55vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .search-result-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-decoration: none;
+    display: block;
+  }
+  .search-result-item:hover { border-color: var(--accent); background: var(--surface2); }
+  .search-result-item .r-num { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--accent); margin-bottom: 0.25rem; }
+  .search-result-item .r-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.2rem; }
+  .search-result-item .r-excerpt { font-size: 0.78rem; color: var(--text-muted); }
+  .search-result-item .r-match { color: var(--accent3); font-weight: 600; }
+  .search-empty { color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 2rem 0; }
+  .search-hint { font-size: 0.75rem; color: var(--text-dim); text-align: center; margin-top: 1rem; }
+  .search-close-btn {
+    position: absolute;
+    top: 1.2rem; right: 2.5rem;
+    background: none; border: none; color: var(--text-muted);
+    font-size: 1.4rem; cursor: pointer; line-height: 1;
+  }
+
+  /* ── NAV SEARCH BUTTON ── */
+  .nav-search-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    padding: 0.35rem 0.9rem;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 0.5rem;
+    white-space: nowrap;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .nav-search-btn:hover { border-color: var(--accent); color: var(--text); }
+  .search-kbd {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    background: var(--border);
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+  }
+
+  /* ── FRAMEWORK CARDS ── */
+  .framework-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin: 1.5rem 0;
+  }
+  .framework-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    transition: all 0.25s;
+  }
+  .framework-card:hover { border-color: var(--accent4); transform: translateY(-2px); }
+  .framework-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--accent4);
+    background: rgba(247,151,30,0.1);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 0.75rem;
+  }
+  .framework-card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .framework-card p { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; }
+
   /* ── STEP FLOW ── */
   .step-flow {
     display: flex;
@@ -778,9 +907,23 @@
 </head>
 <body>
 
+<!-- SEARCH OVERLAY -->
+<div class="search-wrap" id="searchOverlay" onclick="closeSearchIfBg(event)">
+  <div class="search-box">
+    <span class="search-icon-label">🔍</span>
+    <input class="search-input" id="searchInput" placeholder="패턴 이름, 키워드로 검색..." oninput="doSearch(this.value)" />
+    <button class="search-close-btn" onclick="closeSearch()">✕</button>
+  </div>
+  <div class="search-results" id="searchResults">
+    <p class="search-empty" id="searchHintMsg">검색어를 입력하세요</p>
+  </div>
+  <p class="search-hint">↑↓ 탐색 · Enter 이동 · Esc 닫기</p>
+</div>
+
 <!-- NAV -->
 <nav>
   <div class="nav-logo">PROMPT_GUIDE</div>
+  <button class="nav-search-btn" onclick="openSearch()">🔍 검색 <span class="search-kbd">Ctrl K</span></button>
   <ul class="nav-links">
     <li><a href="#types">프롬프트 유형</a></li>
     <li><a href="#shots">샷 프롬프팅</a></li>
@@ -793,6 +936,15 @@
     <li><a href="#recipe">레시피 패턴</a></li>
     <li><a href="#inverted">뒤집힌 상호작용</a></li>
     <li><a href="#cognitive">인지 검증자</a></li>
+    <li><a href="#gameplay">게임 플레이</a></li>
+    <li><a href="#question-improve">질문 개선</a></li>
+    <li><a href="#factcheck">팩트체크</a></li>
+    <li><a href="#metalang">메타언어</a></li>
+    <li><a href="#reflection">리플렉션</a></li>
+    <li><a href="#outline">아웃라인 확장</a></li>
+    <li><a href="#context-mgr">컨텍스트 관리</a></li>
+    <li><a href="#infinite-gen">무한 생성</a></li>
+    <li><a href="#frameworks">프레임워크</a></li>
   </ul>
 </nav>
 
@@ -806,7 +958,7 @@
     <p class="hero-desc">프롬프트 유형부터 고급 패턴까지 — AI와 대화하는 방법을 바꾸면 결과가 달라집니다.</p>
     <div class="hero-stats">
       <div class="stat"><span class="stat-num">3</span><span class="stat-label">프롬프트 유형</span></div>
-      <div class="stat"><span class="stat-num">11</span><span class="stat-label">핵심 패턴</span></div>
+      <div class="stat"><span class="stat-num">25</span><span class="stat-label">핵심 패턴</span></div>
       <div class="stat"><span class="stat-num">∞</span><span class="stat-label">활용 가능성</span></div>
     </div>
   </div>
@@ -829,6 +981,15 @@
     <a href="#recipe" class="toc-card"><span class="toc-num">09</span><div class="toc-info"><h4>레시피 패턴</h4><p>단계별 실행 절차 받기</p></div></a>
     <a href="#inverted" class="toc-card"><span class="toc-num">10</span><div class="toc-info"><h4>뒤집힌 상호작용</h4><p>AI가 묻고 사용자가 답한다</p></div></a>
     <a href="#cognitive" class="toc-card"><span class="toc-num">11</span><div class="toc-info"><h4>인지 검증자 패턴</h4><p>복잡한 문제를 정확하게 분석</p></div></a>
+    <a href="#gameplay" class="toc-card"><span class="toc-num">12</span><div class="toc-info"><h4>게임 플레이 패턴</h4><p>대화형 게임 설계하기</p></div></a>
+    <a href="#question-improve" class="toc-card"><span class="toc-num">13</span><div class="toc-info"><h4>질문 개선 패턴</h4><p>질문을 질문하기</p></div></a>
+    <a href="#factcheck" class="toc-card"><span class="toc-num">14</span><div class="toc-info"><h4>팩트체크 목록 패턴</h4><p>정보 검증을 위한 목록 작성</p></div></a>
+    <a href="#metalang" class="toc-card"><span class="toc-num">15</span><div class="toc-info"><h4>메타언어 생성 패턴</h4><p>나만의 AI 단축 명령어 만들기</p></div></a>
+    <a href="#reflection" class="toc-card"><span class="toc-num">16</span><div class="toc-info"><h4>리플렉션 패턴</h4><p>AI 자기성찰로 품질 향상</p></div></a>
+    <a href="#outline" class="toc-card"><span class="toc-num">17</span><div class="toc-info"><h4>아웃라인 확장 패턴</h4><p>복잡한 주제 구조화하기</p></div></a>
+    <a href="#context-mgr" class="toc-card"><span class="toc-num">18</span><div class="toc-info"><h4>컨텍스트 관리자 패턴</h4><p>AI 응답 방향 정밀 조정</p></div></a>
+    <a href="#infinite-gen" class="toc-card"><span class="toc-num">19</span><div class="toc-info"><h4>무한 생성 패턴</h4><p>맞춤형 출력 무한 생성</p></div></a>
+    <a href="#frameworks" class="toc-card"><span class="toc-num">20+</span><div class="toc-info"><h4>프롬프트 프레임워크</h4><p>5W1H · CO-STAR · FOCUS · ROSES</p></div></a>
   </div>
 </section>
 
@@ -1417,7 +1578,477 @@ FTA 활용과 원산지 증명 전문가입니다.<br><br>
   </div>
 </section>
 
-<!-- FOOTER -->
+<!-- SECTION 12: GAMEPLAY -->
+<section id="gameplay" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">12</span>
+    <div>
+      <div class="section-label">Game Play Pattern</div>
+      <h2 class="section-title">게임 플레이 패턴</h2>
+      <p class="section-sub">AI를 텍스트 기반 인터랙티브 게임 엔진으로 활용하는 방법입니다.</p>
+    </div>
+  </div>
+
+  <div class="tip-box">
+    <span class="tip-icon">🎮</span>
+    <p>게임 플레이 패턴의 핵심은 <strong>[입력] → [처리] → [출력]</strong> 구조입니다. 게임 목적, 플레이어 특징, 진행 조건, 엔딩을 명확히 정의할수록 몰입감 있는 경험이 만들어집니다.</p>
+  </div>
+
+  <div class="framework-grid">
+    <div class="framework-card">
+      <div class="framework-tag">EXAMPLE 1</div>
+      <h4>🛸 외계인 침공 게임</h4>
+      <p>지구 도시와 외계인 기지를 탐험하고, NPC와 대화하며 퍼즐을 해결하는 어드벤처 게임. 상태창 + 장면 설명 + 선택지 구조로 출력.</p>
+    </div>
+    <div class="framework-card">
+      <div class="framework-tag">EXAMPLE 2</div>
+      <h4>🦄 유니콘 나라 스토리텔링</h4>
+      <p>주인공(4살 여아 서아)이 반려견 밀크와 산책 중 아기 유니콘을 만나 여행하는 5분 완성형 스토리게임. 폭력 없는 안전한 결말 보장.</p>
+    </div>
+  </div>
+
+  <h3 style="font-size:1rem; font-weight:700; margin:2rem 0 1rem;">게임 프롬프트 필수 구성 요소</h3>
+  <div class="code-block" data-lang="game template">
+<span class="code-key">#입력</span><br>
+[게임 목적] = {게임의 최종 목표}<br>
+[플레이어가 해야할 일] = {탐험 / NPC 상호작용 / 퍼즐 / 전투}<br>
+[플레이어의 특징] = {성격, 능력, 배경}<br>
+[도전과 장애물] = {적, 함정, 보스}<br>
+[게임 진행 조건] = {선택지 → 결과 연결 규칙}<br>
+[게임 엔딩] = {클리어 조건}<br><br>
+<span class="code-key">#처리</span><br>
+당신은 "텍스트 기반 어드벤처 게임"입니다.<br>
+반드시 <span class="code-str">한 장면씩 진행</span>합니다.<br><br>
+<span class="code-key">#출력</span><br>
+[상태창] [장면 설명] [선택지]
+  </div>
+
+  <div class="checklist" style="margin-top:1.5rem;">
+    <div class="check-item">게임 목적이 명확한가?</div>
+    <div class="check-item">한 장면씩 진행 지시가 있는가?</div>
+    <div class="check-item">선택지 → 결과 연결 규칙이 있는가?</div>
+    <div class="check-item">상태창 출력 형식이 지정되었는가?</div>
+    <div class="check-item">대상 연령과 콘텐츠 제약이 명시되었는가?</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 13: QUESTION IMPROVEMENT -->
+<section id="question-improve" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">13</span>
+    <div>
+      <div class="section-label">Question Improvement Pattern</div>
+      <h2 class="section-title">질문 개선 패턴</h2>
+      <p class="section-sub">AI에게 사용자의 질문 자체를 먼저 분석하고 더 나은 질문으로 업그레이드하도록 지시합니다.</p>
+    </div>
+  </div>
+
+  <div class="pattern-grid">
+    <div class="pattern-card">
+      <div class="pattern-icon">✏️</div>
+      <h4>방법 1: 개선 후 답변</h4>
+      <p>제 질문에 바로 답하지 말고, 먼저 분석해서 더 나은 질문으로 개선하세요. 개선된 질문을 보여준 뒤 그 질문에 스스로 답하세요.</p>
+    </div>
+    <div class="pattern-card">
+      <div class="pattern-icon">🔀</div>
+      <h4>방법 2: 여러 버전 제시</h4>
+      <p>제 질문을 3가지 다른 방향으로 개선하고, 각 버전의 목적을 설명한 뒤 제가 선택하면 그 버전으로 답하세요.</p>
+    </div>
+    <div class="pattern-card">
+      <div class="pattern-icon">🩺</div>
+      <h4>방법 3: 문제 진단 먼저</h4>
+      <p>제 질문의 문제점(모호함, 잘못된 전제, 누락된 맥락)을 먼저 지적하고, 수정된 질문으로 답변하세요.</p>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:2rem;">
+    <h4>실전 예시 3가지</h4>
+    <div class="code-block" data-lang="examples">
+<span class="code-key">1 단순 개선형</span><br>
+아래 질문을 더 명확하고 답변 가능한 형태로 개선한 뒤 답변하세요.<br>
+개선한 이유도 한 줄로 설명하세요.<br>
+질문: <span class="code-str">"AI를 무역에 활용하려면 어떻게 해야 하나요?"</span><br><br>
+<span class="code-key">2 다방향 분기형</span><br>
+제 질문을 3가지 다른 해석으로 개선해주세요.<br>
+질문: <span class="code-str">"수출 자동화는 어떻게 시작하나요?"</span><br><br>
+<span class="code-key">3 전제 교정형</span><br>
+잘못된 전제를 지적하고 교정된 질문으로 다시 물어봐주세요.<br>
+질문: <span class="code-str">"FTA를 쓰면 관세를 안내도 되는 건가요?"</span>
+    </div>
+  </div>
+
+  <h3 style="font-size:1rem; font-weight:700; margin:2rem 0 1rem;">질문 보내기 전 체크리스트</h3>
+  <div class="checklist">
+    <div class="check-item">대상이 명확한가?</div>
+    <div class="check-item">범위가 좁혀졌는가?</div>
+    <div class="check-item">목적이 포함되어 있는가?</div>
+    <div class="check-item">현재 상태가 포함되어 있는가?</div>
+    <div class="check-item">잘못된 전제는 없는가?</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 14: FACT CHECK -->
+<section id="factcheck" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">14</span>
+    <div>
+      <div class="section-label">Fact Check List Pattern</div>
+      <h2 class="section-title">팩트체크 목록 패턴</h2>
+      <p class="section-sub">검증이 필요한 항목을 AI가 스스로 추출하고 목록화하도록 지시합니다.</p>
+    </div>
+  </div>
+
+  <div class="type-grid">
+    <div class="type-card" style="border-color:rgba(255,101,132,0.3);">
+      <div class="type-badge" style="background:rgba(255,101,132,0.12);color:var(--accent2);">방법 1</div>
+      <h3>답변 후 목록 추가</h3>
+      <p class="type-desc">답변 마지막에 팩트체크 필요 항목을 표 형식으로 자동 추가합니다.</p>
+      <div class="code-block" data-lang="format">
+##팩트체크 필요항목<br>
+|항목|내용|검증방법|신뢰도|
+      </div>
+    </div>
+    <div class="type-card" style="border-color:rgba(247,151,30,0.3);">
+      <div class="type-badge" style="background:rgba(247,151,30,0.12);color:var(--accent4);">방법 2</div>
+      <h3>답변 전 위험 예고</h3>
+      <p class="type-desc">답변 전에 틀리기 쉬운 항목을 먼저 나열하고, 그 항목을 특히 주의하며 작성합니다.</p>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <h4>신뢰도 등급별 팩트체크 형식</h4>
+    <div class="intensity-levels">
+      <div class="level-row">
+        <span class="level-badge level-l4">🔴 필수</span>
+        <span class="level-text">반드시 확인: 틀리면 큰 피해가 생기는 항목</span>
+        <span class="level-example">예: 관세율, 원산지 기준</span>
+      </div>
+      <div class="level-row">
+        <span class="level-badge level-l3">🟡 권장</span>
+        <span class="level-text">확인 권장: 바뀔 가능성이 있는 항목</span>
+        <span class="level-example">예: 규정 개정, 인증 요건</span>
+      </div>
+      <div class="level-row">
+        <span class="level-badge level-l2">🟢 참고</span>
+        <span class="level-text">참고 수준: 개략적으로 맞지만 세부는 다를 수 있음</span>
+        <span class="level-example">예: 시장 트렌드, 업계 관행</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip-box">
+    <span class="tip-icon">💡</span>
+    <p>신뢰도 점수형으로 활용 시: <code style="color:var(--accent3);">{사실내용}[신뢰도:xx%](이유:~)</code> 형식으로 각 주요 사실에 신뢰도와 이유를 함께 표시하게 합니다.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 15: METALANGUAGE -->
+<section id="metalang" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">15</span>
+    <div>
+      <div class="section-label">Meta Language Pattern</div>
+      <h2 class="section-title">메타언어 생성 패턴</h2>
+      <p class="section-sub">AI와 대화하는 나만의 단축 명령어를 만들어 반복 작업을 자동화합니다.</p>
+    </div>
+  </div>
+
+  <div class="tip-box">
+    <span class="tip-icon">⌨️</span>
+    <p>메타언어 패턴은 <strong>자주 사용하는 복잡한 지시문을 단축어로 압축</strong>하는 기법입니다. 대화 시작 시 단축어 규칙을 선언하면, 이후 짧은 명령으로 복잡한 작업을 실행할 수 있습니다.</p>
+  </div>
+
+  <div class="code-block" style="margin-bottom:1.5rem;" data-lang="business shortcut">
+<span class="code-comment">## 무역 실무용 단축어 선언</span><br>
+/요약 = 핵심만 3줄, 전문용어 제거, 무역 실무자 기준, 결론 먼저 → 이유 순서<br>
+/코드 = Python 작성, 주석 한국어, 예외처리 포함, 실행가능한 완성코드, 설명 없이 코드만<br>
+/비교 = 2~4개 대안을 표로 정리, 항목: 장점/단점/비용/난이도/추천상황, 마지막 행에 종합 추천<br><br>
+<span class="code-str">사용 예: /요약 베트남 FTA 활용방법 알려줘</span>
+  </div>
+
+  <div class="code-block" data-lang="editor shortcut">
+<span class="code-comment">## 편집자 모드 단축어 선언</span><br>
+[독자] = 초등학생<br>
+[단축어1] "/유:[단어]:[개수]" → [독자] 수준의 유의어 [개수]개 + 추천 1개<br>
+[단축어2] "/반:[단어]:[개수]" → [독자] 수준의 반의어 [개수]개 + 추천 1개<br>
+[단축어3] "/유반:[단어]:[개수]" → 단축어1 + 단축어2 동시 수행<br><br>
+<span class="code-str">당신은 "출판사 편집자"입니다. 단축어를 제공할 때까지 대기합니다.</span>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 16: REFLECTION -->
+<section id="reflection" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">16</span>
+    <div>
+      <div class="section-label">Reflection Pattern</div>
+      <h2 class="section-title">리플렉션 패턴</h2>
+      <p class="section-sub">AI 초안 → AI 스스로 비평 → AI 스스로 개선 → 최종 결과물 순으로 품질을 높입니다.</p>
+    </div>
+  </div>
+
+  <div class="step-flow">
+    <div class="step-item">
+      <div class="step-connector"><div class="step-circle">1</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h5>[초안] 최선의 첫 번째 답변 작성</h5>
+        <p>제약 없이 먼저 최선을 다해 답변을 작성합니다</p>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-connector"><div class="step-circle">2</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h5>[자기 비평] 가장 약한 부분 분석</h5>
+        <p>가장 약한 부분 / 빠뜨린 내용 / 독자가 오해할 수 있는 부분을 솔직하게 검토</p>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-connector"><div class="step-circle">3</div></div>
+      <div class="step-content">
+        <h5>[개선본] 비평을 반영한 최종 답변</h5>
+        <p>비평 결과를 모두 반영한 완성도 높은 최종 버전 제출</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="compare-row" style="margin-top:2rem;">
+    <div class="compare-bad">
+      <div class="compare-label">방법 1: 3단계 개선</div>
+      초안 → 비평 → 개선 순으로 명확히 구분하여 한 번에 수행
+    </div>
+    <div class="compare-good">
+      <div class="compare-label">방법 2: 반복 정제</div>
+      초안을 N번 스스로 개선. 각 반복마다 무엇을 왜 바꿨는지 한 줄 기록
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:1.5rem;">
+    <h4>자기 평가 기준 점수제 (7점 미만 자동 개선)</h4>
+    <div class="intensity-levels">
+      <div class="level-row"><span class="level-badge level-l2">①</span><span class="level-text">명확성: 한 번에 이해되는가?</span></div>
+      <div class="level-row"><span class="level-badge level-l2">②</span><span class="level-text">완결성: 필요한 내용이 모두 있는가?</span></div>
+      <div class="level-row"><span class="level-badge level-l2">③</span><span class="level-text">정확성: 틀린 내용이 없는가?</span></div>
+      <div class="level-row"><span class="level-badge level-l2">④</span><span class="level-text">실용성: 읽은 후 바로 실행할 수 있는가?</span></div>
+      <div class="level-row"><span class="level-badge level-l2">⑤</span><span class="level-text">간결성: 불필요한 내용이 없는가?</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 17: OUTLINE EXPANSION -->
+<section id="outline" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">17</span>
+    <div>
+      <div class="section-label">Outline Expansion Pattern</div>
+      <h2 class="section-title">아웃라인 확장 패턴</h2>
+      <p class="section-sub">복잡한 주제를 단계적으로 구조화하여 깊고 완성도 높은 결과물을 만드는 방법입니다.</p>
+    </div>
+  </div>
+
+  <div class="step-flow">
+    <div class="step-item">
+      <div class="step-connector"><div class="step-circle">1</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h5>대주제 아웃라인만 요청</h5>
+        <p>최상위 구조 + 항목별 한 줄 설명만. <em>"세부 내용은 아직 작성하지 마세요"</em></p>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-connector"><div class="step-circle">2</div><div class="step-line"></div></div>
+      <div class="step-content">
+        <h5>선택한 파트 확장</h5>
+        <p>원하는 챕터의 학습 목표, 실습 내용, 예상 소요 시간을 포함한 상세 아웃라인</p>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-connector"><div class="step-circle">3</div></div>
+      <div class="step-content">
+        <h5>최소 단위까지 확장</h5>
+        <p>선택한 수업의 강의 스크립트 + 실습 코드 완성본 작성</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip-box">
+    <span class="tip-icon">📊</span>
+    <p>아웃라인에 <strong>전체 대비 비중(%)과 우선순위</strong>를 함께 표시하게 하면 균형 잡힌 커리큘럼·보고서 구조를 만들 수 있습니다. 실습 코드가 이론 설명보다 비중이 높아야 한다는 조건 등 제약을 추가해 보세요.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 18: CONTEXT MANAGER -->
+<section id="context-mgr" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">18</span>
+    <div>
+      <div class="section-label">Context Manager Pattern</div>
+      <h2 class="section-title">컨텍스트 관리자 패턴</h2>
+      <p class="section-sub">대화 전체에 걸쳐 AI 응답의 방향을 정밀하게 고정하는 방법입니다.</p>
+    </div>
+  </div>
+
+  <div class="code-block" style="margin-bottom:1.5rem;" data-lang="context template">
+<span class="code-key">##상황</span>     {지금 처한 구체적 상황}<br>
+<span class="code-key">##나의 수준</span>  {이 주제에 대한 사전 지식과 경험}<br>
+<span class="code-key">##목적</span>     {이 답변으로 무엇을 결정하거나 실행할 것인가?}<br>
+<span class="code-key">##제약</span>     {시간, 예산, 인력, 기술적 한계}<br>
+<span class="code-key">##원하지 않는 것</span> {답변에서 제외해야 할 방향이나 내용}
+  </div>
+
+  <div class="highlight-box">
+    <h4>전체 대화 컨텍스트 고정 예시 (의료기기 중소기업)</h4>
+    <div class="code-block" data-lang="full context">
+<span class="code-comment">아래 조건은 이 대화 전체에 적용됩니다.</span><br><br>
+<span class="code-key">##회사 상황</span><br>
+업종: 의료기기 중소기업 · 직원 30명 · 무역팀 3명<br>
+수출국: 미국 60%, 독일 30% · 연 수출액 약 50억원<br><br>
+<span class="code-key">##기술 환경</span><br>
+현재 시스템: ERP 없음, 엑셀 중심 · 개발 인력 없음 · IT 예산 월 100만원 이내<br><br>
+<span class="code-key">##절대 제외 사항</span><br>
+- 대규모 시스템 도입 제안(ERP)<br>
+- 개발자 고용 전제의 솔루션<br>
+- 6개월 이상 구축 기간이 필요한 방안<br><br>
+<span class="code-str">이 컨텍스트를 이해했으면 "준비완료"라고만 답하세요.</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 19: INFINITE GENERATION -->
+<section id="infinite-gen" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">19</span>
+    <div>
+      <div class="section-label">Infinite Generation Pattern</div>
+      <h2 class="section-title">무한 생성 패턴</h2>
+      <p class="section-sub">고정된 프레임과 변수 조합으로 무한한 맞춤형 출력을 생성합니다.</p>
+    </div>
+  </div>
+
+  <div class="tip-box">
+    <span class="tip-icon">♾️</span>
+    <p>무한 생성 패턴은 <strong>고정 프레임 + 변수</strong>로 구성됩니다. 프레임(형식·길이·구조)은 고정하고, 변수만 바꿔가며 원하는 조합의 콘텐츠를 무한 생성할 수 있습니다.</p>
+  </div>
+
+  <div class="code-block" style="margin-bottom:1.5rem;" data-lang="email generator">
+<span class="code-comment">## 무역 이메일 생성기</span><br><br>
+<span class="code-key">고정 프레임:</span><br>
+"[수신자 유형]에게 [목적]을 전달하는 영문 이메일"<br><br>
+<span class="code-key">변수:</span><br>
+{수신자}: 신규바이어 / 기존거래처 / 포워더 / 관세사<br>
+{목적}: 첫연락 / 견적요청 / 납기연장 / 클레임 대응<br>
+{톤}: 공식 / 친근 / 긴급<br><br>
+<span class="code-key">생성 규칙:</span><br>
+3단락 구조, 제목 포함 150단어 이내
+  </div>
+
+  <div class="type-grid">
+    <div class="type-card" style="border-color:rgba(108,99,255,0.3);">
+      <div class="type-badge" style="background:rgba(108,99,255,0.15);color:#a78bfa;">활용 팁 1</div>
+      <h3>조합 수 계산하기</h3>
+      <p class="type-desc">변수 4 × 변수 4 × 변수 3 = 48가지 이메일을 하나의 프레임으로 생성 가능</p>
+    </div>
+    <div class="type-card" style="border-color:rgba(67,233,123,0.3);">
+      <div class="type-badge" style="background:rgba(67,233,123,0.12);color:var(--accent3);">활용 팁 2</div>
+      <h3>시리즈 콘텐츠 생성</h3>
+      <p class="type-desc">SNS 포스팅, 제품 설명문, 교육 자료 등 반복 형식의 콘텐츠에 특히 효과적</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SECTION 20+: FRAMEWORKS -->
+<section id="frameworks" class="content-section fade-in">
+  <div class="section-header">
+    <span class="section-num">20+</span>
+    <div>
+      <div class="section-label">Prompt Frameworks</div>
+      <h2 class="section-title">프롬프트 프레임워크</h2>
+      <p class="section-sub">검증된 구조화 프레임워크로 복잡한 요청을 체계적으로 전달합니다.</p>
+    </div>
+  </div>
+
+  <div class="framework-grid">
+    <div class="framework-card">
+      <div class="framework-tag">20 · 5W1H</div>
+      <h4>5W1H 프레임워크</h4>
+      <p>Who · What · When · Where · Why · How로 상황을 완전히 정의. EU 시장 진출 전략, 수출 계획 수립 등 전략적 분석에 적합.</p>
+    </div>
+    <div class="framework-card">
+      <div class="framework-tag">21 · CO-STAR</div>
+      <h4>CO-STAR 프레임워크</h4>
+      <p>Context · Objective · Style · Tone · Audience · Response. 바이어 설득 제안서, 마케팅 문서처럼 대상과 목적이 명확한 문서 작성에 최적.</p>
+    </div>
+    <div class="framework-card">
+      <div class="framework-tag">22 · FOCUS</div>
+      <h4>FOCUS 프레임워크</h4>
+      <p>Function · Objective · Context · Utility · Specifications. LinkedIn 메시지, 영업 캠페인처럼 구체적 스펙이 필요한 콘텐츠 생성에 활용.</p>
+    </div>
+    <div class="framework-card">
+      <div class="framework-tag">23 · ROSES</div>
+      <h4>ROSES 프레임워크</h4>
+      <p>Role · Objective · Scenario · Expected Solution · Steps. 가격 협상 전략, 단계별 시나리오 설계처럼 복잡한 협상·전략 문서에 적합.</p>
+    </div>
+    <div class="framework-card">
+      <div class="framework-tag">24 · RISEN</div>
+      <h4>RISEN 프레임워크</h4>
+      <p>Role · Instructions · Steps · Expectations · Narrowing. 명확한 역할과 기대치를 정의하고 단계별로 범위를 좁혀가는 구조.</p>
+    </div>
+    <div class="framework-card">
+      <div class="framework-tag">25 · BaB</div>
+      <h4>BaB 프레임워크</h4>
+      <p>Before · After · Bridge. 수출 성공 스토리, 변화를 강조하는 사례 기반 콘텐츠 작성에 효과적인 스토리텔링 구조.</p>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <h4>ROSES 실전 예시 — 가격 협상 전략</h4>
+    <div class="code-block" data-lang="ROSES example">
+<span class="code-key">Role:</span> 국제 무역 협상 전문가<br>
+<span class="code-key">Objective:</span> FOB $50/unit 달성<br>
+<span class="code-key">Scenario:</span><br>
+- 바이어 첫 제시가: $40 · 우리 희망가: $50 · 시장 평균: $45<br>
+- 바이어 연간 예상물량: 50,000 units · 경쟁사(중국) 제시가: $42<br>
+<span class="code-key">Expected Solution:</span> 협상 전략 3단계 + 단계별 가격·조건 + 양보 vs 가치 밸런스<br>
+<span class="code-key">Steps:</span><br>
+1. 현재 상황 분석<br>
+2. 가치 제안 준비 (품질, 납기, 인증)<br>
+3. 1차: 품질 차별화 강조 → $55 제시<br>
+4. 2차: 물량 증가 시 단계별 할인 ($55→$53→$50)<br>
+5. 계약서 작성 및 후속 조치<br><br>
+<span class="code-str">#출력: [협상 스크립트] 각 단계별 대화 예시(영문) + [체크리스트]</span>
+    </div>
+  </div>
+
+  <div class="md-table-wrap" style="overflow-x:auto; margin-top:2rem;">
+    <table class="md-table">
+      <thead>
+        <tr><th>프레임워크</th><th>핵심 요소</th><th>최적 사용 상황</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>5W1H</strong></td><td>Who/What/When/Where/Why/How</td><td>전략 기획, 시장 분석</td></tr>
+        <tr><td><strong>CO-STAR</strong></td><td>Context/Objective/Style/Tone/Audience/Response</td><td>제안서, 마케팅 문서</td></tr>
+        <tr><td><strong>FOCUS</strong></td><td>Function/Objective/Context/Utility/Specifications</td><td>영업 메시지, 캠페인</td></tr>
+        <tr><td><strong>ROSES</strong></td><td>Role/Objective/Scenario/Expected Solution/Steps</td><td>협상 전략, 시나리오</td></tr>
+        <tr><td><strong>RISEN</strong></td><td>Role/Instructions/Steps/Expectations/Narrowing</td><td>교육, 단계별 가이드</td></tr>
+        <tr><td><strong>BaB</strong></td><td>Before/After/Bridge</td><td>성공 사례, 스토리텔링</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
 <footer>
   <p style="margin-bottom:0.5rem;">AI 프롬프트 완전 가이드 · Built with ♥</p>
   <p style="color:var(--text-dim);">프롬프트 엔지니어링으로 AI와의 대화를 더 스마트하게</p>
@@ -1456,7 +2087,78 @@ FTA 활용과 원산지 증명 전문가입니다.<br><br>
 
   document.querySelectorAll('.type-grid').forEach(grid => barObserver.observe(grid));
 
-  // Smooth active nav highlight
+  // ── SEARCH ──────────────────────────────
+  const searchData = [
+    { id:'types', num:'01', title:'프롬프트 3가지 유형', keywords:'서술형 지침형 함수형 descriptive instructive functional 유형' },
+    { id:'shots', num:'02', title:'샷 프롬프팅', keywords:'제로샷 원샷 퓨샷 zero one few shot 예시 example' },
+    { id:'persona', num:'03', title:'페르소나 패턴', keywords:'페르소나 역할 전문가 persona role 무역' },
+    { id:'markdown', num:'04', title:'마크다운 구조화 프롬프트', keywords:'마크다운 markdown 구조 표 테이블 입력 출력' },
+    { id:'intensity', num:'05', title:'표현 강도 & 우선순위', keywords:'강도 intensity 강조 요구 필수 선호 우선순위' },
+    { id:'tone', num:'06', title:'톤(말투) 지정', keywords:'톤 tone 말투 격식 친근 공식 비공식' },
+    { id:'alternatives', num:'07', title:'대안 접근법 패턴', keywords:'대안 접근법 alternative 비교 선택지 역발상' },
+    { id:'user-persona', num:'08', title:'이용자 페르소나 패턴', keywords:'이용자 페르소나 독자 대상 수준 맞춤형' },
+    { id:'recipe', num:'09', title:'레시피 패턴', keywords:'레시피 recipe 단계 step 절차 로드맵 클레임' },
+    { id:'inverted', num:'10', title:'뒤집힌 상호작용 패턴', keywords:'뒤집힌 inverted 질문 수집 정보 제안서' },
+    { id:'cognitive', num:'11', title:'인지 검증자 패턴', keywords:'인지 검증 cognitive verifier 분해 하위질문 분석' },
+    { id:'gameplay', num:'12', title:'게임 플레이 패턴', keywords:'게임 game 어드벤처 스토리텔링 외계인 유니콘 선택지 상태창' },
+    { id:'question-improve', num:'13', title:'질문 개선 패턴', keywords:'질문 개선 업그레이드 전제 FTA 수출 자동화' },
+    { id:'factcheck', num:'14', title:'팩트체크 목록 패턴', keywords:'팩트체크 검증 신뢰도 목록 관세 원산지 위험' },
+    { id:'metalang', num:'15', title:'메타언어 생성 패턴', keywords:'메타언어 단축어 명령어 /요약 /코드 /비교 편집자' },
+    { id:'reflection', num:'16', title:'리플렉션 패턴', keywords:'리플렉션 reflection 자기비평 개선 초안 평가 점수' },
+    { id:'outline', num:'17', title:'아웃라인 확장 패턴', keywords:'아웃라인 outline 확장 구조화 커리큘럼 python 자동화' },
+    { id:'context-mgr', num:'18', title:'컨텍스트 관리자 패턴', keywords:'컨텍스트 context 제약 ERP 의료기기 무역팀 방향 고정' },
+    { id:'infinite-gen', num:'19', title:'무한 생성 패턴', keywords:'무한 infinite 생성 프레임 변수 이메일 바이어 조합' },
+    { id:'frameworks', num:'20+', title:'프롬프트 프레임워크', keywords:'5W1H CO-STAR FOCUS ROSES RISEN BaB 협상 제안서 바이어 프레임워크' },
+  ];
+
+  function openSearch() {
+    document.getElementById('searchOverlay').classList.add('open');
+    setTimeout(() => document.getElementById('searchInput').focus(), 50);
+  }
+  function closeSearch() {
+    document.getElementById('searchOverlay').classList.remove('open');
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchResults').innerHTML = '<p class="search-empty" id="searchHintMsg">검색어를 입력하세요</p>';
+  }
+  function closeSearchIfBg(e) {
+    if (e.target === document.getElementById('searchOverlay')) closeSearch();
+  }
+
+  function highlight(text, query) {
+    if (!query) return text;
+    const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+    return text.replace(re, '<span class="r-match">$1</span>');
+  }
+
+  function doSearch(q) {
+    const res = document.getElementById('searchResults');
+    q = q.trim();
+    if (!q) {
+      res.innerHTML = '<p class="search-empty">검색어를 입력하세요</p>';
+      return;
+    }
+    const lower = q.toLowerCase();
+    const matches = searchData.filter(d =>
+      d.title.toLowerCase().includes(lower) || d.keywords.toLowerCase().includes(lower)
+    );
+    if (!matches.length) {
+      res.innerHTML = '<p class="search-empty">검색 결과가 없습니다</p>';
+      return;
+    }
+    res.innerHTML = matches.map(d => `
+      <a class="search-result-item" href="#${d.id}" onclick="closeSearch()">
+        <div class="r-num">섹션 ${d.num}</div>
+        <div class="r-title">${highlight(d.title, q)}</div>
+        <div class="r-excerpt">${highlight(d.keywords.split(' ').filter(k=>k.toLowerCase().includes(lower)).slice(0,5).join(' · '), q)}</div>
+      </a>
+    `).join('');
+  }
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
+    if (e.key === 'Escape') closeSearch();
+  });
   const sections = document.querySelectorAll('section[id]');
   const navLinks = document.querySelectorAll('.nav-links a');
 
